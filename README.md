@@ -42,9 +42,27 @@
 2. 학생이 수강을 신청하면 강사가 신청을 승인합니다.
 3. 학생이 마감 전 과제를 제출하고, 강사는 제출된 코드와 채점 점수를 확인합니다.
 
-## 저장소와 문서
+## 저장소 구성
 
-이 저장소는 S.E.S의 **백엔드 API**를 담고 있습니다. 현재 프런트엔드는 포함하지 않으며, API를 통해 기능을 이용하거나 확인할 수 있습니다.
+S.E.S는 백엔드와 프런트엔드를 하나의 저장소에서 관리하는 모노레포입니다.
 
-- [개발·실행 가이드](docs/development.md): 서버 실행, 환경 설정, API 사용 예시, 테스트, Docker 채점기와 현재 제한 사항
-- [Swagger UI](http://localhost:8080/swagger-ui.html): 서버 실행 후 API 명세 확인 및 요청 실행
+```text
+ses/
+├── README.md
+├── ses-backend/     # 백엔드 API와 Docker 채점기
+└── ses-frontend/    # 프런트엔드 개발 공간
+```
+
+- [백엔드](ses-backend/README.md): API 서버, 문제·과제 채점, 데이터 저장
+- [프런트엔드](ses-frontend/README.md): 현재 소스·정적 자산 디렉터리만 준비한 상태이며 화면과 실행 환경은 이후 구현합니다.
+- [개발·실행 가이드](ses-backend/docs/development.md): 서버 실행, 환경 설정, API 사용 예시, 테스트, Docker 채점기와 현재 제한 사항
+- [Swagger UI](http://localhost:8080/swagger-ui.html): 백엔드 실행 후 API 명세 확인 및 요청 실행
+
+각 패키지는 자체 실행·빌드 설정을 관리합니다. Git 작업은 상위 `ses/`에서 수행하며, 하위 패키지에 별도 Git 저장소나 서브모듈을 두지 않습니다.
+
+## 브랜치와 원격 저장소
+
+- `legacy/main`: 모노레포 전환 전의 원본 서버를 보존한 브랜치입니다. 서버 파일이 저장소 루트에 있는 당시 구조를 그대로 유지합니다.
+- `feat/backend-modernization`: 서버 실행 복구, API 문서화, 채점기 교체와 모노레포 구성을 진행하는 기능 브랜치입니다.
+
+GitHub 저장소의 새 이름은 `lifeishiphop/ses`이며, `origin`은 `https://github.com/lifeishiphop/ses.git`를 사용합니다. GitHub에서 저장소 이름을 변경한 뒤 해당 주소로 원격 작업을 할 수 있습니다.

@@ -1,14 +1,15 @@
 # 개발·실행 가이드
 
-S.E.S 서버의 실행, 환경 설정, API 사용, 테스트와 채점기 운영을 안내합니다. 서비스 소개와 주요 이용 흐름은 [README](../README.md)를 참고하세요.
+S.E.S 서버의 실행, 환경 설정, API 사용, 테스트와 채점기 운영을 안내합니다. 서비스 소개와 전체 패키지 구성은 [루트 README](../../README.md), 백엔드 패키지 안내는 [Backend README](../README.md)를 참고하세요.
 
 ## 빠른 실행
 
 JDK **17 또는 21**이 필요합니다. Gradle은 별도로 설치하지 않아도 됩니다. 첫 실행에서는 Gradle Wrapper와 의존성을 다운로드하므로 인터넷 연결이 필요합니다.
 
-저장소 루트에서 실행합니다.
+모노레포 루트(`ses/`)에서 백엔드 디렉터리로 이동해 실행합니다. 이후 이 문서의 실행·빌드·테스트 명령은 모두 백엔드 디렉터리(`ses-backend/`)를 기준으로 합니다.
 
 ```sh
+cd ses-backend
 ./gradlew bootRun
 ```
 
@@ -64,7 +65,7 @@ curl http://localhost:8080/problem \
 java -jar build/libs/ses-backend-0.0.1-SNAPSHOT.jar
 ```
 
-JAR도 저장소 루트에서 실행하면 개발 실행과 같은 `data/`를 사용합니다. `test` 프로필은 메모리 H2 DB를 사용하며 로컬 파일 DB나 외부 DB를 변경하지 않습니다.
+JAR도 백엔드 디렉터리(`ses-backend/`)에서 실행하면 개발 실행과 같은 `data/`를 사용합니다. `test` 프로필은 메모리 H2 DB를 사용하며 로컬 파일 DB나 외부 DB를 변경하지 않습니다.
 
 - `ApiIntegrationTest`: 실제 Security 필터·컨트롤러·서비스·JPA를 연결해 회원가입/로그인, 중복·비밀번호 검증, JWT 누락·변조·만료·탈퇴 회원, 비밀번호 변경, 문제 CRUD·검색·테스트케이스, 강의실·과제, 게시글·댓글 및 작성자 검증을 확인합니다.
 - `OpenApiIntegrationTest`: 모든 컨트롤러 경로의 문서 포함 여부, 요청·성공·오류 응답 스키마, 공개 API와 JWT 표시, Swagger UI 리소스와 JSON/YAML 접근을 확인합니다.
