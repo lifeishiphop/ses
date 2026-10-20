@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -83,6 +84,22 @@ class GradingApiIntegrationTest {
         assertThat(second.path("score").asInt()).isZero();
         assertThat(second.path("result").asText()).isEqualTo("컴파일 에러입니다.");
         assertThat(submissions.count()).isEqualTo(1);
+    }
+
+    @Test
+    void assignmentDetailPreservesSubmittedLanguageAndScoreForEditor() throws Exception {
+        Assignment assignment = assignment(LocalDateTime.now().plusDays(1));
+        assignment.setLanguage(0);
+        assignments.saveAndFlush(assignment);
+        correct();
+        String code = "#include <iostream>\nint main() { std::cout << 3; }";
+        request("/assignment/submit/" + assignment.getId(), Map.of("language", 2, "submit_contents", code), 200);
+        mvc.perform(get("/assignment/" + assignment.getId()).header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.language").value(0))
+                .andExpect(jsonPath("$.submit_language").value(2))
+                .andExpect(jsonPath("$.score").value(100))
+                .andExpect(jsonPath("$.submit_contents").value(code));
     }
 
     @Test

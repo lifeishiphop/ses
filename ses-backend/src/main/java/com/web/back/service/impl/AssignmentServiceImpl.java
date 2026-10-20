@@ -89,6 +89,8 @@ public class AssignmentServiceImpl implements AssignmentService {
 
         if (submit != null) {
             assignmentDto.setSubmit_contents(submit.getSubmit_contents());
+            assignmentDto.setSubmit_language(submit.getLanguage());
+            assignmentDto.setScore(submit.getScore());
         }
 
         return assignmentDto;

@@ -19,6 +19,15 @@ public class CommentDto {
     private String content;
     @Schema(description="등록 일시", example="2026-10-21T09:00:00")
     private LocalDateTime upload_time;
+    @Schema(description="작성자 ID", example="1")
+    private Long writer_id;
+
+    public CommentDto(Long id, String content, LocalDateTime upload_time, String writer) {
+        this.id = id;
+        this.content = content;
+        this.writer = writer;
+        this.upload_time = upload_time;
+    }
     @Schema(description="작성자 이름", example="홍길동")
     private String writer;
 
@@ -29,6 +38,7 @@ public class CommentDto {
                 comment.getUpload_time(),
                 comment.getWriter().getName()
         );
+        commentDto.setWriter_id(comment.getWriter().getId());
         return commentDto;
     }
 }

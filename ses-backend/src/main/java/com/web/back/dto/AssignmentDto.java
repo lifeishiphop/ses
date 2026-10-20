@@ -38,6 +38,10 @@ public class AssignmentDto {
 
     @Schema(description="소스 코드", example="public class Main { public static void main(String[] args) { System.out.println(3); } }")
     private String submit_contents;
+    @Schema(description="최근 제출 코드의 언어: 1=Java, 2=C++")
+    private Integer submit_language;
+    @Schema(description="최근 제출의 채점 점수")
+    private Integer score;
 
     public AssignmentDto() {
 

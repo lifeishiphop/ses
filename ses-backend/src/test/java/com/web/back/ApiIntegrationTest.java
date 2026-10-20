@@ -188,7 +188,8 @@ class ApiIntegrationTest {
                 Map.of("content", "답변"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.content").value("답변"));
         mvc.perform(authorized(get("/board/{board}/{post}", boardId, postId), token))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.comments[0].content").value("답변"));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.comments[0].content").value("답변"))
+                .andExpect(jsonPath("$.comments[0].writer_id").value(members.findByNumber("20260001").orElseThrow().getId()));
         String otherToken = signUpAndLogin("20260002");
         send(authorized(put("/board/{board}/edit/{post}", boardId, postId), otherToken),
                 Map.of("title", "다른 회원의 수정", "content", "내용"))
@@ -205,7 +206,9 @@ class ApiIntegrationTest {
     private String signUpAndLogin(String number) throws Exception {
         send(post("/signup"), registration(number)).andExpect(status().isOk());
         return read(send(post("/login"), Map.of("id", number, "password", PASSWORD))
-                .andExpect(status().isOk())).path("token").asText();
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.memberDto.id").value(members.findByNumber(number).orElseThrow().getId())))
+                .path("token").asText();
     }
 
     private Map<String, Object> registration(String number) {

@@ -51,6 +51,7 @@ public class MemberDto {
                 member.getName(),
                 member.getIdentity()
         );
+        memberDto.setId(member.getId());
 
         return memberDto;
     }

@@ -5,3 +5,6 @@
 .env.*
 !.env.example
 node_modules/
+
+# Implementation and design guides stay local in docs directories.
+docs/
