@@ -5,7 +5,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Clock;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.impl.DefaultClock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,7 +19,7 @@ import java.util.function.Function;
 public class JwtTokenProvider {
     static final String CLAIM_KEY_USERNAME = "sub"; // 토큰 제목 (subject)
     static final String CLAIM_KEY_CREATED = "iat"; // 토큰이 발급된 시간 (issued at), 이 값을 사용하여 토큰의 age 가 얼마나 되었는지 판단할 수 있다.
-    private final Clock clock = DefaultClock.INSTANCE;
+    private final Clock clock = Date::new;
 
     // 비밀키
     @Value("${jwt.signing.key.secret}")

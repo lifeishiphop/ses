@@ -4,11 +4,13 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -27,31 +29,31 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String username = null;
-        String token = null;
-        UserDetails userDetails = null;
-
-        // Authorization 헤더를 가져와서
         String headerAuth = request.getHeader("Authorization");
-        // Bearer 뒷 문자를 토큰으로 취급
-        if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
-            token = headerAuth.substring(7, headerAuth.length());
-            username = jwtTokenProvider.getUsernameFromToken(token);
+        if (!StringUtils.hasText(headerAuth) || !headerAuth.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
         }
 
-        // 인증 과정
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            try{
-                userDetails = this.accountService.loadUserByUsername(username);
-                if (jwtTokenProvider.validateToken(token, userDetails)) {
-                    UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                    usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+        try {
+            String token = headerAuth.substring(7);
+            String username = jwtTokenProvider.getUsernameFromToken(token);
+            if (username == null) {
+                throw new IllegalArgumentException("토큰에 학번이 없습니다.");
+            }
+            if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = accountService.loadUserByUsername(username);
+                if (!jwtTokenProvider.validateToken(token, userDetails)) {
+                    throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
                 }
+                var authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-            catch(Exception e){
-                response.sendError(400, "유효하지 않은 토큰입니다.");
-            }
+        } catch (JwtException | AuthenticationException | IllegalArgumentException e) {
+            SecurityContextHolder.clearContext();
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "유효하지 않은 토큰입니다.");
+            return;
         }
         filterChain.doFilter(request, response);
     }

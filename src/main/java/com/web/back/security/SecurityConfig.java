@@ -1,6 +1,7 @@
 package com.web.back.security;
 
 import com.web.back.service.AccountService;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +13,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -33,6 +35,9 @@ public class SecurityConfig {
     @Autowired
     private JwtTokenFilter jwtTokenFilter;
 
+    @Autowired
+    private JwtAuthenticationEntryPoint authenticationEntryPoint;
+
     @Value("${jwt.get.token.url}")
     private String authenticationPath;
 
@@ -52,14 +57,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         // CSRF = Cross-Site Request Forgery, 쿠키를 사용하지 않으면 disable
-        return http.csrf().disable().exceptionHandling(Customizer.withDefaults()) //CSRF 비활성화 and 기본적인 예외 처리 설정
+        return http.csrf(AbstractHttpConfigurer::disable)
+                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authenticationEntryPoint))
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 ) // 세션 관리 설정 => 비활성화
-                .cors().and() // CORS 허용
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(requests ->
                         requests
+                                .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                                 .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
+                                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs",
+                                        "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
                                 .anyRequest().authenticated()
                 )  // 요청 권한 설정 (모든 요청에 대해)
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class) // 필터 추가 (JWT 토큰 필터 + 사용자 인증 필터)

@@ -5,7 +5,7 @@ import com.web.back.model.*;
 import com.web.back.repository.*;
 import com.web.back.service.AccountService;
 import com.web.back.service.AssignmentService;
-import com.web.back.utils.CompileManager;
+import com.web.back.service.JudgeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +15,9 @@ import java.util.List;
 
 @Service
 public class AssignmentServiceImpl implements AssignmentService {
+
+    @Autowired
+    private JudgeService judgeService;
 
     @Autowired
     private AssignmentRepository assignmentRepository;
@@ -144,108 +147,21 @@ public class AssignmentServiceImpl implements AssignmentService {
     // 과제 코드 실행
     @Override
     public SubmitDto runAssignmentCode(Long assignmentId, SubmitDto submitDto) throws Exception {
-        CompileManager compile = new CompileManager();
-
-        Assignment assignment = assignmentRepository.findById(assignmentId).orElseThrow(() -> {
-            return new IllegalArgumentException("해당 문제를 찾을 수 없습니다.");
-        });
-
-
-        Integer selectedLanguage = submitDto.getLanguage();
-        Integer assginmentLanguage = assignment.getLanguage();
-
-
-//        if (!selectedLanguage.equals(problemLanguage)) {
-//            throw new IllegalArgumentException("선택한 언어가 문제의 언어와 일치하지 않습니다.");
-//        }
-
-        List<Testcase> testCases = testcaseRepository.findByAssignmentId(assignment.getId());
-
-        if (testCases.isEmpty()) {
-            submitDto.setSubmit_time(LocalDateTime.now());
-            submitDto.setScore(-1);
-            submitDto.setResult("테스트 할 수 없는 과제입니다.");
-            return submitDto;
+        if (submitDto.getAssignment_id() != null && !assignmentId.equals(submitDto.getAssignment_id())) {
+            throw new IllegalArgumentException("경로와 본문의 과제 ID가 일치하지 않습니다.");
         }
-        else {
-            System.out.println(selectedLanguage);
-
-            Integer score = 0 ;
-            String result = "";
-
-            for (Testcase testCase : testCases) {
-                String codeOutput;
-                if(assginmentLanguage == 0 && selectedLanguage.equals(1)){
-                    codeOutput = compile.compileTimeout(() -> compile.compileJava(submitDto.getSubmit_contents(), testCase.getInput()), 10000);
-                }
-                else if (assginmentLanguage == 0 && selectedLanguage.equals(2))
-                {
-                    codeOutput = compile.compileTimeout(() -> compile.compileCpp(submitDto.getSubmit_contents(), testCase.getInput()), 10000);
-                }
-                else if (assginmentLanguage == 1 && selectedLanguage.equals(1))
-                {
-                    codeOutput = compile.compileTimeout(() -> compile.compileJava(submitDto.getSubmit_contents(), testCase.getInput()), 10000);
-                }
-                else if (assginmentLanguage == 2 && selectedLanguage.equals(2))
-                {
-                    codeOutput = compile.compileTimeout(() -> compile.compileCpp(submitDto.getSubmit_contents(), testCase.getInput()), 10000);
-                }
-                else {
-                    //throw new IllegalArgumentException("지원되지 않는 언어입니다.");
-                    codeOutput = "지원되지 않는 언어입니다.";
-                }
-
-                String expectedOutput = testCase.getOutput();
-
-                boolean isTestCasePassed = codeOutput.trim().equals(expectedOutput.trim());
-                boolean isTimePassed = codeOutput.trim().equals("시간 초과");
-                boolean isCompilePassed = codeOutput.trim().equals("컴파일 에러");
-                boolean isLanguagePassed = codeOutput.trim().equals("지원되지 않는 언어입니다.");
-
-                System.out.println(codeOutput.trim());
-                System.out.println(expectedOutput.trim());
-
-                if (isTestCasePassed == true)
-                {
-                    result = "정답입니다.";
-                    score = 100;
-
-                } else if(isTimePassed == true)
-                {
-                    result = "시간 초과입니다.";
-                    score = 0;
-                }
-                else if(isCompilePassed == true)
-                {
-                    result = "컴파일 에러입니다.";
-                    score = 0;
-                }
-                else if( isLanguagePassed == true)
-                {
-                    result = "지원되지 않는 언어입니다.";
-                    score = 0;
-                }
-                else{
-                    result = "오답입니다.";
-                    score = 0;
-                    break;
-                }
-            }
-
-            submitDto.setSubmit_time(LocalDateTime.now());
-            submitDto.setScore(score);
-            submitDto.setResult(result);
-
-            return submitDto;
-        }
+        Assignment assignment = assignmentRepository.findById(assignmentId).orElseThrow(() ->
+                new IllegalArgumentException("해당 과제를 찾을 수 없습니다."));
+        submitDto.setAssignment_id(assignmentId);
+        submitDto.setProblem_id(null);
+        submitDto.setMember_id(accountService.getAuthenticatedMember().getId());
+        return judgeService.grade(assignment.getLanguage(), submitDto,
+                testcaseRepository.findByAssignmentId(assignmentId), "테스트 할 수 없는 과제입니다.");
     }
 
     // 과제 코드 제출
     @Override
     public SubmitDto submitAssignmentCode(Long assignmentId, SubmitDto submitDto) throws Exception {
-        // 코드 실행
-        SubmitDto newSubmit = runAssignmentCode(assignmentId, submitDto);
-
         Assignment assignment = assignmentRepository.findById(assignmentId).orElseThrow(() -> {
             return new IllegalArgumentException("해당 문제를 찾을 수 없습니다.");
         });
@@ -258,6 +174,7 @@ public class AssignmentServiceImpl implements AssignmentService {
             throw new IllegalStateException("과제 마감일이 지났습니다. 더이상 제출할 수 없습니다.");
         }
 
+        SubmitDto newSubmit = runAssignmentCode(assignmentId, submitDto);
         Member member = accountService.getAuthenticatedMember();
         Submit submit;
         // 이미 제출 정보가 존재하면 덮어쓰기

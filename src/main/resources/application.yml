@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: ses-backend
+  profiles:
+    default: local
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate.hbm2ddl.halt_on_error: true
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:ses@localhost}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp:
+        auth: ${MAIL_SMTP_AUTH:false}
+        starttls.enable: ${MAIL_STARTTLS:false}
+        connectiontimeout: 5000
+        timeout: 5000
+        writetimeout: 5000
+
+server:
+  address: ${SERVER_ADDRESS:127.0.0.1}
+  port: ${SERVER_PORT:8080}
+
+jwt:
+  signing.key.secret: ${JWT_SECRET}
+  token.expiration.in.seconds: ${JWT_EXPIRATION_SECONDS:3600}
+  get.token.url: /login
+  http.request.header: Authorization
+
+springdoc:
+  packages-to-scan: com.web.back.controller
+  api-docs.enabled: ${API_DOCS_ENABLED:true}
+  swagger-ui:
+    enabled: ${API_DOCS_ENABLED:true}
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+    persist-authorization: false
+
+judge:
+  docker-command: ${JUDGE_DOCKER_COMMAND:docker}
+  image: ${JUDGE_IMAGE:ses-judge:local}
+  memory: ${JUDGE_MEMORY:512m}
+  compile-timeout: ${JUDGE_COMPILE_TIMEOUT:10s}
+  run-timeout: ${JUDGE_RUN_TIMEOUT:10s}
+  max-concurrent: ${JUDGE_MAX_CONCURRENT:2}

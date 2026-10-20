@@ -3,12 +3,15 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-**/src/main/resources
-pom.xml
-mvnw
-mvnw.cmd
-.mvn
 logs
+.gradle/
+data/
+*.class
+.env
+.env.*
+!.env.example
+src/main/resources/application-*.local.yml
+.DS_Store
 
 .apt_generated
 .classpath
